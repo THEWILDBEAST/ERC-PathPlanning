@@ -9,4 +9,4 @@ npimg=np.array(img)
 npimg = ~ npimg
 
 npimg[npimg>0]=1
-print(npimg)
+np.save('cspace.npy')
