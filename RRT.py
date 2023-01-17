@@ -21,7 +21,7 @@ class RRTAlgorithm():
         self.iterations = min(numIterations, 250)
         self.grid = grid
         self.rho = stepSize
-        self.path_distance = 0
+        self.path_distance = 2
         self.nearestDist = 10000
         self.numWaypoints = 0
         self.Waypoints = []
@@ -61,6 +61,17 @@ class RRTAlgorithm():
                 return True
         return False
 
+    def isInObstacleg(self, locationStart, locationEnd):
+        u_hat = self.unitVector(locationStart, locationEnd)
+        testPoint = np.array([0.0, 0.0])
+
+        for i in range(int(self.distance(locationStart,locationEnd))):
+            testPoint[0] = min(grid.shape[1] - 1, locationStart.locationX + i * u_hat[0])
+            testPoint[1] = min(grid.shape[0] - 1, locationStart.locationY + i * u_hat[1])
+            if self.grid[round(testPoint[1]), round(testPoint[0])] == 1:
+                return True
+        return False
+
     def unitVector(self, locationStart, locationEnd):
         v = np.array([locationEnd[0] - locationStart.locationX, locationEnd[1] - locationStart.locationY])
         u_hat = v / np.linalg.norm(v)
@@ -90,6 +101,14 @@ class RRTAlgorithm():
         self.nearestDist = 10000
         self.nearestNode = None
 
+
+    def findDirectPath(self,new):
+        #goal=np.array([self.goal.locationX,self.goal.locationY])
+        if not self.isInObstacleg(self.goal,new):
+            return True
+        return False
+
+
     def retraceRRTPath(self, goal):
 
         if goal.locationX == self.randomTree.locationX:
@@ -101,7 +120,7 @@ class RRTAlgorithm():
         self.retraceRRTPath(goal.parent)
 
 
-grid = np.load('cspace.npy')
+grid = np.load('cspace1.npy')
 start = np.array([150.0, 150.0])
 goal = np.array([1600.0, 750.0])
 numIterations = 200
@@ -133,8 +152,9 @@ for i in range(rrt.iterations):
         rrt.addChild(new[0], new[1])
         plt.pause(0.10)
         plt.plot([rrt.nearestNode.locationX, new[0]], [rrt.nearestNode.locationY, new[1]], 'go', linestyle="--")
-        if (rrt.goalFound(new)):
-            rrt.addChild(goal[0], goal[1])
+        if rrt.findDirectPath(new):
+            rrt.goal.parent=treeNode(new[0],new[1])
+            rrt.goal.parent.parent=rrt.nearestNode
             rrt.retraceRRTPath(rrt.goal)
             print('Goal Found')
             break
